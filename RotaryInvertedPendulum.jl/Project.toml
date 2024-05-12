@@ -1,0 +1,9 @@
+name = "RotaryInvertedPendulum"
+uuid = "c64586be-f5aa-4369-9f08-31eaf2caf4c4"
+authors = ["Henrique Ferrolho <henrique.ferrolho@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Joysticks = "82f05805-4863-42dc-b1a7-0852bd62c632"
+LibSerialPort = "a05a14c7-6e3b-5ba9-90a2-45558833e1df"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
