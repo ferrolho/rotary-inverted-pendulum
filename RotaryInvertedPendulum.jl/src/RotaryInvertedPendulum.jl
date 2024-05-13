@@ -13,6 +13,8 @@ CONTROL_FREQUENCY = 100  # Frequency of the control loop (in Hz)
 const CHECK_READY_COMMAND = "CHECK_READY"
 const GET_POSITION_COMMAND = "GET_POSITION"
 const SET_TARGET_COMMAND = "SET_TARGET"
+const START_MOTOR_COMMAND = "START_MOTOR"
+const STOP_MOTOR_COMMAND = "STOP_MOTOR"
 
 function wait_until_ready(arduino)
     ready = false
@@ -99,8 +101,17 @@ function main()
                 println("Target position: $target_position_motor")
             end
 
-            # Check if the user wants to exit
-            if jsbuttons.btn5.val  # Xbox Y-button
+            if jsbuttons.btn1.val  # Xbox A-button
+                # Start the motor
+                write(arduino, "$START_MOTOR_COMMAND\n")
+            elseif jsbuttons.btn2.val  # Xbox B-button
+                # Stop the motor
+                write(arduino, "$STOP_MOTOR_COMMAND\n")
+            elseif jsbuttons.btn5.val  # Xbox Y-button
+                # Stop the motor
+                write(arduino, "$STOP_MOTOR_COMMAND\n")
+
+                # Stop the main loop
                 running = false
             end
 
