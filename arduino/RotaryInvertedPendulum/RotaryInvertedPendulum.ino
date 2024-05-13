@@ -5,8 +5,9 @@
 #define stepPin 3 // Step
 
 // Create an instance of the AccelStepper class
-AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
+AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin, 0, 0, false);
 
+bool motor_running = false;
 long motor_target_pos = 0;
 
 void setup()
@@ -14,9 +15,15 @@ void setup()
     // Start the serial communication
     Serial.begin(115200);
 
-    // Set the maximum speed and acceleration:
+    // Set the maximum speed and acceleration
     stepper.setMaxSpeed(200000);
     stepper.setAcceleration(100000);
+
+    // Set the enable pin for the stepper motor driver and
+    // invert it because we are using a DRV8825 board with an
+    // active-low enable signal (LOW = enabled, HIGH = disabled)
+    stepper.setEnablePin(5);
+    stepper.setPinsInverted(false, false, true);
 }
 
 void loop()
@@ -35,11 +42,14 @@ void loop()
         }
     }
 
-    // Move the motor to the target position
-    stepper.moveTo(motor_target_pos);
+    if (motor_running)
+    {
+        // Move the motor to the target position
+        stepper.moveTo(motor_target_pos);
 
-    // Run the stepper motor
-    stepper.run();
+        // Run the stepper motor
+        stepper.run();
+    }
 }
 
 String receivedMessage;
@@ -70,6 +80,25 @@ void handleCommand()
         long newTargetPos = targetPosString.toInt();
         // Set the new target position
         motor_target_pos = newTargetPos;
+    }
+    else if (receivedMessage == "START_MOTOR")
+    {
+        // Enable the motor outputs
+        stepper.enableOutputs();
+
+        // Set the motor_running flag to true
+        motor_running = true;
+    }
+    else if (receivedMessage == "STOP_MOTOR")
+    {
+        // Stop the motor
+        stepper.stop();
+
+        // Disable the motor outputs
+        stepper.disableOutputs();
+
+        // Set the motor_running flag to false
+        motor_running = false;
     }
 
     // Reset the received message
