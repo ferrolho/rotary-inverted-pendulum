@@ -1,4 +1,6 @@
 #include <AccelStepper.h>
+#include <AS5600.h>
+#include <Wire.h>
 
 // Define the stepper motor connections
 #define dirPin 2  // Direction
@@ -7,13 +9,19 @@
 // Create an instance of the AccelStepper class
 AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin, 0, 0, false);
 
+// Create an instance of the AS5600 class
+AMS_5600 ams5600;
+
 bool motor_running = false;
 long motor_target_pos = 0;
 
+word pendulum_rest_position = 0;
+word pendulum_actual_position = 0;
+
 void setup()
 {
-    // Start the serial communication
-    Serial.begin(115200);
+    Serial.begin(115200); // Start the serial communication
+    Wire.begin();         // Start the I2C communication
 
     // Set the maximum speed and acceleration
     stepper.setMaxSpeed(200000);
@@ -24,6 +32,28 @@ void setup()
     // active-low enable signal (LOW = enabled, HIGH = disabled)
     stepper.setEnablePin(5);
     stepper.setPinsInverted(false, false, true);
+
+    if (ams5600.detectMagnet() == 0)
+    {
+        while (true)
+        {
+            if (ams5600.detectMagnet() == 1)
+            {
+                Serial.print("Current Magnitude: ");
+                Serial.println(ams5600.getMagnitude());
+                break;
+            }
+            else
+            {
+                Serial.println("Cannot detect magnet.");
+            }
+            delay(1000);
+        }
+    }
+
+    pendulum_rest_position = ams5600.getRawAngle();
+    Serial.print("Rest Position: ");
+    Serial.println(pendulum_rest_position);
 }
 
 void loop()
@@ -52,6 +82,12 @@ void loop()
     }
 }
 
+float convertRawAngleToDegrees(word rawAngle)
+{
+    // Raw data reports 0–4095 segments, which is 0.087890625 of a degree
+    return rawAngle * 0.087890625;
+}
+
 String receivedMessage;
 
 void parseReceivedMessage(char receivedChar)
@@ -72,6 +108,21 @@ void handleCommand()
     {
         // Send the current position to the laptop
         Serial.println(stepper.currentPosition());
+    }
+    else if (receivedMessage == "GET_POSITION_PENDULUM")
+    {
+        pendulum_actual_position = ams5600.getRawAngle();
+
+        float difference = pendulum_actual_position - pendulum_rest_position;
+
+        if (difference < 0)
+        {
+            difference += 4096;
+        }
+
+        float degrees = convertRawAngleToDegrees(difference);
+
+        Serial.println(degrees);
     }
     else if (receivedMessage.startsWith("SET_TARGET"))
     {
