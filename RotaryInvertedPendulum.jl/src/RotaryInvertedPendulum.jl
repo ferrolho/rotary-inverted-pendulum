@@ -48,7 +48,7 @@ function wait_until_ready(arduino)
     println("Arduino is ready to receive commands.")
 end
 
-function main()
+function gamepad_control()
     # Initialize motor variables
     actual_position_motor = 0
     target_position_motor = 0
@@ -58,6 +58,9 @@ function main()
     jsaxes = JSState()
     jsbuttons = JSButtonState()
     async_read!(js, jsaxes, jsbuttons)
+
+    # Joystick to motor velocity multiplier
+    multiplier = 50.0
 
     LibSerialPort.open("/dev/cu.usbserial-110", BAUD_RATE) do arduino
         # Wait until the Arduino is ready
@@ -73,12 +76,6 @@ function main()
             set_read_timeout(arduino, 0.1)
             set_write_timeout(arduino, 0.1)
 
-            # Set the motor speed multiplier
-            multiplier = 50.0
-
-            # Set the target position
-            target_position_motor += round(Int, jsaxes.x * multiplier)
-
             # Get the current time
             current_time = now()
 
@@ -89,6 +86,12 @@ function main()
                 # Get the actual position from the Arduino
                 write(arduino, "$GET_POSITION_COMMAND\n")
                 actual_position_motor = parse(Int, chomp(readline(arduino)))
+
+                # Calculate the motor velocity based on the joystick input
+                velocity = round(Int, jsaxes.x * multiplier)
+
+                # Calculate the target position
+                target_position_motor = actual_position_motor + velocity
 
                 # Send the target position to the Arduino
                 write(arduino, "$SET_TARGET_COMMAND $target_position_motor\n")
@@ -123,6 +126,6 @@ end
 
 export
     check_ready,
-    main
+    gamepad_control
 
 end # module RotaryInvertedPendulum
