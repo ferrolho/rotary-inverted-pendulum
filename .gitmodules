@@ -1,0 +1,6 @@
+[submodule "RotaryInvertedPendulum-arduino/libs/Seeed_Arduino_AS5600"]
+	path = RotaryInvertedPendulum-arduino/libs/Seeed_Arduino_AS5600
+	url = https://github.com/Seeed-Studio/Seeed_Arduino_AS5600.git
+[submodule "RotaryInvertedPendulum-arduino/libs/AccelStepper"]
+	path = RotaryInvertedPendulum-arduino/libs/AccelStepper
+	url = https://github.com/waspinator/AccelStepper.git
