@@ -54,7 +54,11 @@ In that case, you should connect the device to a computer and communicate with i
 
 ### Arduino
 
-You can find the Arduino code in the [RotaryInvertedPendulum-arduino](RotaryInvertedPendulum-arduino) folder. The code is written in C++ and is intended to be run on an Arduino Nano (onboard the device), but it can also be run on other Arduino boards if you want to tinker with and modify the device.
+You can find the Arduino code in the [RotaryInvertedPendulum-arduino](RotaryInvertedPendulum-arduino) folder. The code is written in C++ and is intended to be run on an Arduino Nano (onboard the device), but it can also be run on other Arduino boards if you want to tinker with and modify the device. The folder contains code for balancing the pendulum directly from the Arduino, but it also contains code for controlling the pendulum from a computer over a serial connection.
+
+The Arduino code relies on the following two libraries:
+- [AccelStepper](https://www.airspayce.com/mikem/arduino/AccelStepper/) for controlling the stepper motor.
+- [AS5600](https://github.com/Seeed-Studio/Seeed_Arduino_AS5600) for reading the AS5600 magnetic encoder.
 
 ### Julia
 
