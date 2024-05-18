@@ -8,6 +8,7 @@ The goal of this project is to build a simple and affordable rotary inverted pen
 - [Rotary Inverted Pendulum](#rotary-inverted-pendulum)
   - [Mechanics](#mechanics)
   - [Electronics](#electronics)
+    - [Circuit Diagram](#circuit-diagram)
     - [Current Limiting](#current-limiting)
   - [Software](#software)
     - [Arduino](#arduino)
@@ -20,6 +21,14 @@ The goal of this project is to build a simple and affordable rotary inverted pen
 The rotary inverted pendulum uses off-the-shelf components that are easy to source and assemble. The mechanical design is done in [Onshape](https://www.onshape.com/en/) and the STL files are available in the [meshes](meshes) folder. If you are looking for the actual project in Onshape, you can find it [here](https://cad.onshape.com/documents/fa8afe5031ca70c78442e408/w/5519455d45464bacd4cf9b1d/e/79273ac76c3305af463951de).
 
 ## Electronics
+
+There are two models of the rotary inverted pendulum: one with batteries and one without. The model with batteries is more portable and can be used without any cables, while the model without batteries requires a power supply to be connected at all times. However, both devices require a USB cable if you want to control them from a computer.
+
+### Circuit Diagram
+
+| System without batteries                                                  | System with batteries                                                     |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) |
 
 ### Current Limiting
 
