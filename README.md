@@ -14,6 +14,8 @@ The goal of this project is to build a simple and affordable rotary inverted pen
     - [Arduino](#arduino)
     - [Julia](#julia)
     - [Python](#python)
+  - [Related Work](#related-work)
+  - [Purchasing Options](#purchasing-options)
   - [Acknowledgments](#acknowledgments)
 
 ## Mechanics
@@ -29,6 +31,12 @@ There are two models of the rotary inverted pendulum: one with batteries and one
 | System without batteries                                                  | System with batteries                                                     |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) |
+
+The **battery management system (BMS)** is a circuit that manages the batteries in the device. It performs the following functions:
+- balance charging (ensures that all cells in the battery pack are charged to the same voltage)
+- short-circuit protection (prevents the batteries from being damaged in case of a short circuit)
+- overcharge protection (prevents the batteries from being overcharged)
+- overdischarge protection (prevents the batteries from being overdischarged)
 
 ### Current Limiting
 
@@ -77,11 +85,32 @@ You can find the Julia code in the [RotaryInvertedPendulum-julia](RotaryInverted
 
 You can find the Python code in the [RotaryInvertedPendulum-python](RotaryInvertedPendulum-python) folder.
 
+## Related Work
+
+Here are some related projects that you might find interesting:
+
+- https://build-its-inprogress.blogspot.com/2016/08/desktop-inverted-pendulum-part-2-control.html
+- https://www.dagor.dev/blog/furuta-pendulum
+- https://www.youtube.com/watch?v=bY4t6yfBA24
+- https://journals.sagepub.com/doi/full/10.1177/00202940211035406
+- https://tecsolutions.us/sites/default/files/quanser/The%20Rotary%20Control%20Lab%20Brochure_4.pdf
+- https://www.youtube.com/watch?v=2koXcs0IhOc
+- https://www.youtube.com/watch?v=VVQ-PGfJMuA
+- https://build-its-inprogress.blogspot.com/search/label/Pendulum
+
+## Purchasing Options
+
+|            Description | Price (USD) | Link                                                                                                                             |
+| ---------------------: | :---------: | :------------------------------------------------------------------------------------------------------------------------------- |
+|   AliExpress – DIY Kit | $100 ~ $200 | [aliexpress.com/w/wholesale-rotary-inverted-pendulum.html](https://www.aliexpress.com/w/wholesale-rotary-inverted-pendulum.html) |
+| Quanser – QUBE Servo 2 |  > $2,000   | [quanser.com/products/qube-servo-2](https://www.quanser.com/products/qube-servo-2)                                               |
+
 ## Acknowledgments
 
 I would like to thank the following people for their contributions to this project:
 - [Mykha](https://github.com/Mika412) for early discussions about this project over a beer in the park.
-- Vivek and [Vlad](https://github.com/VladimirIvan) for their feedback on the electronics.
+- [André](https://github.com/Esser50K), [Rafael](https://github.com/rkourdis), and [Vlad](https://github.com/VladimirIvan) for technical discussions, feedback, and support.
+- [Vivek](https://github.com/svrkrishnavivek) for his invaluable help and feedback on the electronics of the system.
 - [心诺 (Xinnuo)](https://github.com/XinnuoXu) for her company and support while working on this project.
  
 Finally, I would like to thank the open-source community in general for providing the tools and resources that have also helped make this project possible.
