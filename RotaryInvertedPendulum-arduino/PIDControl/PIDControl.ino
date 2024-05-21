@@ -17,7 +17,6 @@ long ams5600_initial_position = 0;
 const float pendulum_target_deg = 180.0;
 float motor_target_pos = 0.0;
 
-bool tryToBalance = false;
 float prevError = 0.0;
 float integral = 0.0;
 
@@ -79,31 +78,31 @@ void setup()
 
     while (!ams5600.detectMagnet())
     {
-        Serial.println("AS5600 waiting for magnet...");
+        Serial.println("[AS5600] Waiting for magnet...");
         delay(1000); // Wait for the magnet to be detected
     }
 
     // Print the current magnitude of the magnet
-    Serial.print("Current Magnitude: ");
+    Serial.print("[AS5600] Current magnitude: ");
     Serial.println(ams5600.getMagnitude());
 
     // Print the magnet strength
     int magStrength = ams5600.getMagnetStrength();
     if (magStrength == 1)
     {
-        Serial.println("Magnet strength is too weak.");
+        Serial.println("[AS5600] Magnet strength is too weak.");
     }
     else if (magStrength == 2)
     {
-        Serial.println("Magnet strength is just right! :chef-kiss:");
+        Serial.println("[AS5600] Magnet strength is just right! :chef-kiss:");
     }
     else if (magStrength == 3)
     {
-        Serial.println("Magnet strength is too strong.");
+        Serial.println("[AS5600] Magnet strength is too strong.");
     }
 
     ams5600_initial_position = ams5600.getRawAngle();
-    Serial.print("ams5600_initial_position: ");
+    Serial.print("[AS5600] ams5600_initial_position: ");
     Serial.println(ams5600_initial_position);
 
     // Initialize the readings array

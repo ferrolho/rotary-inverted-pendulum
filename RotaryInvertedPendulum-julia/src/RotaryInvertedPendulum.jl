@@ -20,27 +20,39 @@ const STOP_MOTOR_COMMAND = "STOP_MOTOR"
 function wait_until_ready(arduino)
     ready = false
     response = ""
+    timed_out = true
 
     while !ready
         try
-            println("Checking if the Arduino is ready...")
+            if timed_out
+                println("Checking if the Arduino is ready...")
+            end
 
-            # Set the read and write timeouts
+            # Wait for the Arduino to send a response
             set_read_timeout(arduino, 1)  # 1 second
-            set_write_timeout(arduino, 1)  # 1 second
 
-            # Send the CHECK_READY command to the Arduino
-            write(arduino, "$CHECK_READY_COMMAND\n")
-
-            # Wait for the response
+            # Try to read a response from the Arduino
             response = readline(arduino)
+
+            if timed_out
+                println("  -- Arduino responded:")
+                timed_out = false
+            end
         catch e
             if isa(e, LibSerialPort.Timeout)
-                println("Arduino is not ready. Retrying...")
+                println("  -- Serial port timed out. Arduino is not ready.")
+
+                # Send the CHECK_READY command to the Arduino
+                write(arduino, "$CHECK_READY_COMMAND\n")
+
+                timed_out = true
             else
                 rethrow(e)
             end
         else
+            # Print the response
+            println("  >> $response")
+
             # Check if the Arduino is ready
             ready = chomp(response) == "READY"
         end

@@ -11,12 +11,10 @@ AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin, 0, 0, false);
 
 // Create an instance of the AS5600 class
 AMS_5600 ams5600;
+long ams5600_initial_position = 0;
 
 bool motor_running = false;
 long motor_target_pos = 0;
-
-word pendulum_rest_position = 0;
-word pendulum_actual_position = 0;
 
 void setup()
 {
@@ -33,27 +31,34 @@ void setup()
     stepper.setEnablePin(5);
     stepper.setPinsInverted(false, false, true);
 
-    if (ams5600.detectMagnet() == 0)
+    while (!ams5600.detectMagnet())
     {
-        while (true)
-        {
-            if (ams5600.detectMagnet() == 1)
-            {
-                Serial.print("Current Magnitude: ");
-                Serial.println(ams5600.getMagnitude());
-                break;
-            }
-            else
-            {
-                Serial.println("Cannot detect magnet.");
-            }
-            delay(1000);
-        }
+        Serial.println("[AS5600] Waiting for magnet...");
+        delay(1000); // Wait for the magnet to be detected
     }
 
-    pendulum_rest_position = ams5600.getRawAngle();
-    Serial.print("Rest Position: ");
-    Serial.println(pendulum_rest_position);
+    // Print the current magnitude of the magnet
+    Serial.print("[AS5600] Current magnitude: ");
+    Serial.println(ams5600.getMagnitude());
+
+    // Print the magnet strength
+    int magStrength = ams5600.getMagnetStrength();
+    if (magStrength == 1)
+    {
+        Serial.println("[AS5600] Magnet strength is too weak.");
+    }
+    else if (magStrength == 2)
+    {
+        Serial.println("[AS5600] Magnet strength is just right! :chef-kiss:");
+    }
+    else if (magStrength == 3)
+    {
+        Serial.println("[AS5600] Magnet strength is too strong.");
+    }
+
+    ams5600_initial_position = ams5600.getRawAngle();
+    Serial.print("[AS5600] ams5600_initial_position: ");
+    Serial.println(ams5600_initial_position);
 }
 
 void loop()
@@ -82,10 +87,25 @@ void loop()
     }
 }
 
-float convertRawAngleToDegrees(word rawAngle)
+/*
+ * Convert the raw angle from the AS5600 magnetic encoder to degrees.
+ */
+float convertRawAngleToDegrees()
 {
-    // Raw data reports 0–4095 segments, which is 0.087890625 of a degree
-    return rawAngle * 0.087890625;
+    // Get the current position of the AS5600
+    short ams5600_current_position = ams5600.getRawAngle();
+
+    // Calculate the difference between the current position and the initial position
+    short difference = ams5600_current_position - ams5600_initial_position;
+
+    if (difference < 0)
+    {
+        difference += 4096;
+    }
+
+    // Map the 0–4095 segments of the AS5600 to 0–360 degrees
+    // 360 degrees / 4096 segments = 0.087890625 degrees per segment
+    return difference * 0.087890625;
 }
 
 String receivedMessage;
@@ -106,23 +126,16 @@ void handleCommand()
     }
     else if (receivedMessage == "GET_POSITION")
     {
-        // Send the current position to the laptop
+        // Send the current position of the stepper motor over serial
         Serial.println(stepper.currentPosition());
     }
     else if (receivedMessage == "GET_POSITION_PENDULUM")
     {
-        pendulum_actual_position = ams5600.getRawAngle();
+        // Get the pendulum position
+        float pendulum_actual_deg = convertRawAngleToDegrees();
 
-        float difference = pendulum_actual_position - pendulum_rest_position;
-
-        if (difference < 0)
-        {
-            difference += 4096;
-        }
-
-        float degrees = convertRawAngleToDegrees(difference);
-
-        Serial.println(degrees);
+        // Send the current position of the pendulum over serial
+        Serial.println(pendulum_actual_deg);
     }
     else if (receivedMessage.startsWith("SET_TARGET"))
     {
