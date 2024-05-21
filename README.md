@@ -28,9 +28,9 @@ There are two models of the rotary inverted pendulum: one with batteries and one
 
 ### Circuit Diagram
 
-| System without batteries                                                  | System with batteries                                                     |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) |
+| System without batteries                                                     | System with batteries                                                     |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ![diagrams/system-with-batteries.jpg](diagrams/system-without-batteries.jpg) | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) |
 
 The **battery management system (BMS)** is a circuit that manages the batteries in the device. It performs the following functions:
 - balance charging (ensures that all cells in the battery pack are charged to the same voltage)
@@ -90,13 +90,13 @@ You can find the Python code in the [RotaryInvertedPendulum-python](RotaryInvert
 Here are some related projects that you might find interesting:
 
 - https://build-its-inprogress.blogspot.com/2016/08/desktop-inverted-pendulum-part-2-control.html
-- https://www.dagor.dev/blog/furuta-pendulum
-- https://www.youtube.com/watch?v=bY4t6yfBA24
+- https://build-its-inprogress.blogspot.com/search/label/Pendulum
 - https://journals.sagepub.com/doi/full/10.1177/00202940211035406
 - https://tecsolutions.us/sites/default/files/quanser/The%20Rotary%20Control%20Lab%20Brochure_4.pdf
+- https://www.dagor.dev/blog/furuta-pendulum
 - https://www.youtube.com/watch?v=2koXcs0IhOc
+- https://www.youtube.com/watch?v=bY4t6yfBA24
 - https://www.youtube.com/watch?v=VVQ-PGfJMuA
-- https://build-its-inprogress.blogspot.com/search/label/Pendulum
 
 ## Purchasing Options
 
