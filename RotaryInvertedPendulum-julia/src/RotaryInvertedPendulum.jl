@@ -5,17 +5,13 @@ using Joysticks
 using LibSerialPort
 using Plots
 
-# Constants
-const BAUD_RATE = 115200  # Baud rate for the serial communication
-CONTROL_FREQUENCY = 100  # Frequency of the control loop (in Hz)
-
 # Command constants
-const CHECK_READY_COMMAND = "CHECK_READY"
-const GET_POSITION_COMMAND = "GET_POSITION"
-const GET_POSITION_PENDULUM_COMMAND = "GET_POSITION_PENDULUM"
-const SET_TARGET_COMMAND = "SET_TARGET"
-const START_MOTOR_COMMAND = "START_MOTOR"
-const STOP_MOTOR_COMMAND = "STOP_MOTOR"
+const CHECK_READY_COMMAND = "1"
+const GET_POSITION_COMMAND = "2"
+const GET_POSITION_PENDULUM_COMMAND = "3"
+const SET_TARGET_COMMAND = "4"
+const START_MOTOR_COMMAND = "5"
+const STOP_MOTOR_COMMAND = "6"
 
 function wait_until_ready(arduino)
     ready = false

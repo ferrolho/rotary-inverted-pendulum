@@ -16,9 +16,17 @@ long ams5600_initial_position = 0;
 bool motor_running = false;
 long motor_target_pos = 0;
 
+// Define the commands
+#define CHECK_READY "1"
+#define GET_POSITION "2"
+#define GET_POSITION_PENDULUM "3"
+#define SET_TARGET "4"
+#define START_MOTOR "5"
+#define STOP_MOTOR "6"
+
 void setup()
 {
-    Serial.begin(115200); // Start the serial communication
+    Serial.begin(2000000); // Start the serial communication
     Wire.begin();         // Start the I2C communication
 
     // Set the maximum speed and acceleration
@@ -119,17 +127,17 @@ void parseReceivedMessage(char receivedChar)
 void handleCommand()
 {
     // Implement logic to handle different commands
-    if (receivedMessage == "CHECK_READY")
+    if (receivedMessage.startsWith(CHECK_READY))
     {
         // Send a ready signal to indicate that Arduino is ready to receive commands
         Serial.println("READY");
     }
-    else if (receivedMessage == "GET_POSITION")
+    else if (receivedMessage.startsWith(GET_POSITION))
     {
         // Send the current position of the stepper motor over serial
         Serial.println(stepper.currentPosition());
     }
-    else if (receivedMessage == "GET_POSITION_PENDULUM")
+    else if (receivedMessage.startsWith(GET_POSITION_PENDULUM))
     {
         // Get the pendulum position
         float pendulum_actual_deg = convertRawAngleToDegrees();
@@ -137,15 +145,16 @@ void handleCommand()
         // Send the current position of the pendulum over serial
         Serial.println(pendulum_actual_deg);
     }
-    else if (receivedMessage.startsWith("SET_TARGET"))
+    else if (receivedMessage.startsWith(SET_TARGET))
     {
         // Extract the target position from the message
-        String targetPosString = receivedMessage.substring(10);
-        long newTargetPos = targetPosString.toInt();
+        // For example, "4 1000" will set the target position to 1000
+        String targetPosString = receivedMessage.substring(2);
+
         // Set the new target position
-        motor_target_pos = newTargetPos;
+        motor_target_pos = targetPosString.toInt();
     }
-    else if (receivedMessage == "START_MOTOR")
+    else if (receivedMessage.startsWith(START_MOTOR))
     {
         // Enable the motor outputs
         stepper.enableOutputs();
@@ -153,7 +162,7 @@ void handleCommand()
         // Set the motor_running flag to true
         motor_running = true;
     }
-    else if (receivedMessage == "STOP_MOTOR")
+    else if (receivedMessage.startsWith(STOP_MOTOR))
     {
         // Stop the motor
         stepper.stop();

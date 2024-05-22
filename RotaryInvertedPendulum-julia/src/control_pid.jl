@@ -1,4 +1,18 @@
-function pid_control()
+function convertDegreesToSteps(degrees; microstepping=8)
+    steps_per_revolution = 200 * microstepping
+    degrees_per_revolution = 360.0
+    steps_per_degree = steps_per_revolution / degrees_per_revolution
+    steps = round(Int, degrees * steps_per_degree)
+    return steps
+end
+
+# [hf] Is this the best way to define the State module?
+baremodule State
+WAITING = 1
+BALANCING = 2
+end
+
+function pid_control(baud_rate=2000000, control_frequency=200)
     # Initialise motor variables
     actual_position_motor = 0
     target_position_motor = 0
@@ -7,25 +21,25 @@ function pid_control()
     actual_position_pendulum = 0.0
     target_position_pendulum = 180.0
 
-    # Initialise the PID controller constants
-    Pcrit = 0.0
-    Kp = 0.0
-    Ki = 0.0
-    Kd = 0.0
+    # Ziegler-Nichols parameters
+    Ku = 2.0
+    Tu = 100
 
     # Initialise the PID controller variables
-    error = 0.0
-    last_error = 0.0
-    integral = 0.0
-    derivative = 0.0
+    pid_prev_error = 0.0
+    pid_integral = 0.0
 
-    # Initialise the joystick
-    js = open_joystick()
-    jsaxes = JSState()
-    jsbuttons = JSButtonState()
-    async_read!(js, jsaxes, jsbuttons)
+    # [hf] could the joystick be slowing down the loop?
+    # # Initialise the joystick
+    # js = open_joystick()
+    # jsaxes = JSState()
+    # jsbuttons = JSButtonState()
+    # async_read!(js, jsaxes, jsbuttons)
 
-    LibSerialPort.open("/dev/cu.usbserial-110", BAUD_RATE) do arduino
+    # Initialise the system state
+    state = State.WAITING
+
+    LibSerialPort.open("/dev/cu.usbserial-110", baud_rate) do arduino
         # Wait until the Arduino is ready
         wait_until_ready(arduino)
 
@@ -36,17 +50,73 @@ function pid_control()
         running = true
         while running
             # Set the read and write timeouts
-            set_read_timeout(arduino, 0.1)
-            set_write_timeout(arduino, 0.1)
+            set_read_timeout(arduino, 0.05)  # 50 ms
+            set_write_timeout(arduino, 0.01)  # 10 ms
 
-            # Update Pcrit based on the joystick input
-            Pcrit += 0.01 * -jsaxes.y
-            Pcrit = clamp(Pcrit, 0.0, 10.0)
+            # # Update Ku based on the joystick input
+            # Ku += 0.01 * -jsaxes.y
+            # Ku = clamp(Ku, 0.0, 10.0)
+            # # Update Tu based on the joystick input
+            # Tu += 0.1 * -jsaxes.u
+            # Tu = clamp(Tu, 0.0, 200.0)
 
-            # Calculate the PID controller gains
-            Kp = 0.6 * Pcrit
-            Ki = 2.0 * Pcrit / 100
-            Kd = 0.125 * Pcrit * 100
+            # # Temporary values for finding the critical gain
+            # Kp = Ku
+            # Ki = 0.0
+            # Kd = 0.0
+
+            # # Calculate the PID controller gains
+            # Kp = 0.6 * Ku
+            # Ki = 2.0 * Kp / Tu
+            # Kd = Kp * Tu / 8.0
+
+            # Manually-tuned PID controller gains
+            Kp = 2.2
+            Ki = 1.6
+            Kd = 0.005
+
+            # Get the actual position of the motor from the Arduino
+            write(arduino, "$GET_POSITION_COMMAND\n")
+            actual_position_motor = parse(Int, chomp(readline(arduino)))
+
+            # Get the actual position of the pendulum from the Arduino
+            write(arduino, "$GET_POSITION_PENDULUM_COMMAND\n")
+            actual_position_pendulum = parse(Float64, chomp(readline(arduino)))
+
+            # Calculate the error of the pendulum position
+            pid_error = target_position_pendulum - actual_position_pendulum
+
+            # Only send the control signal if the pendulum
+            # is within this margin of the target position
+            margin_in_deg = 25.0  # in degrees
+            pendulum_close_to_vertical = abs(pid_error) < margin_in_deg
+
+            if state == State.WAITING
+                # If the pendulum is close to the vertical position,
+                # switch to the balancing state
+                if pendulum_close_to_vertical
+                    println("Switching state to 'balancing'")
+                    # Switch the state to 'balancing'
+                    state = State.BALANCING
+                    # Engage the motor
+                    write(arduino, "$START_MOTOR_COMMAND\n")
+                    # Set the motor target position to the current position
+                    target_position_motor = actual_position_motor
+                end
+            elseif state == State.BALANCING
+                # If the pendulum is not close to the vertical position,
+                # switch to the waiting state
+                if !pendulum_close_to_vertical
+                    println("Switching state to 'waiting'")
+                    # Switch the state to 'waiting'
+                    state = State.WAITING
+                    # Disengage the motor
+                    write(arduino, "$STOP_MOTOR_COMMAND\n")
+                    # Reset the PID controller variables
+                    pid_prev_error = 0.0
+                    pid_integral = 0.0
+                end
+            end
 
             # Get the current time
             current_time = time()
@@ -54,42 +124,43 @@ function pid_control()
             # Calculate the elapsed time since the last update
             elapsed_time = current_time - last_update_time
 
-            if elapsed_time >= 1 / CONTROL_FREQUENCY
-                # Get the actual position from the Arduino
-                write(arduino, "$GET_POSITION_COMMAND\n")
-                actual_position_motor = parse(Int, chomp(readline(arduino)))
+            # Update the last update time
+            last_update_time = current_time
 
-                # Get the pendulum position from the Arduino
-                write(arduino, "$GET_POSITION_PENDULUM_COMMAND\n")
-                actual_position_pendulum = parse(Float64, chomp(readline(arduino)))
+            if elapsed_time >= 1 / control_frequency
+                if state == State.BALANCING
+                    # Calculate the integral
+                    pid_integral += pid_error * elapsed_time
 
-                # Calculate the error of the pendulum position
-                error = target_position_pendulum - actual_position_pendulum
+                    # Calculate the derivative
+                    pid_derivative = (pid_error - pid_prev_error) / elapsed_time
+                    pid_prev_error = pid_error  # Update the last error
 
-                # Calculate the integral
-                integral += error #* elapsed_time
+                    # Calculate the output of the PID controller
+                    output = Kp * pid_error + Ki * pid_integral + Kd * pid_derivative
 
-                # Calculate the derivative
-                derivative = (error - last_error) #/ elapsed_time
+                    # Clamp the output to prevent the motor from moving too fast
+                    output_limit = convertDegreesToSteps(10.0)
+                    output = clamp(output, -output_limit, output_limit)
 
-                # Calculate the control signal
-                control_signal = Kp * error + Ki * integral + Kd * derivative
+                    # Calculate the target position of the motor
+                    target_position_motor = actual_position_motor + round(Int, output)
 
-                target_position_motor = actual_position_motor + round(Int, control_signal)
+                    # Clamp the target position to prevent the motor from choking the wires
+                    motor_limit = convertDegreesToSteps(90.0)
+                    target_position_motor = clamp(target_position_motor, -motor_limit, motor_limit)
 
-                # Only send the control signal if the pendulum
-                # is within this margin of the target position
-                margin = 20.0
-                if 180 - margin <= actual_position_pendulum <= 180 + margin
-                    # Send the control signal to the Arduino
+                    # Send the target position to the Arduino
                     write(arduino, "$SET_TARGET_COMMAND $target_position_motor\n")
                 end
+            end
 
-                # Update the last error
-                last_error = error
+            let
+                # Print pendulum position and loop frequency
+                println("Actual pendulum position: $actual_position_pendulum, Loop frequency: $(1 / elapsed_time)")
 
-                # Update the last update time
-                last_update_time = current_time
+                # # Print the Ziegler-Nichols parameters and the target motor position
+                # println("Ku: $Ku, Tu: $Tu, actual_position_pendulum: $actual_position_pendulum, target_position_motor: $target_position_motor")
 
                 # # Print the PID controller gains
                 # println("Kp: $Kp, Ki: $Ki, Kd: $Kd")
@@ -102,26 +173,28 @@ function pid_control()
                 # print("Actual pendulum position: $actual_position_pendulum, ")
                 # println("Target pendulum position: $target_position_pendulum")
 
-                # Print the PID controller gains and the actual pendulum position
-                println("Kp: $Kp, Ki: $Ki, Kd: $Kd, Actual pendulum position: $actual_position_pendulum, Actual motor position: $actual_position_motor, Target motor position: $target_position_motor")
+                # # Print the PID controller gains and the actual pendulum position
+                # println("Kp: $Kp, Ki: $Ki, Kd: $Kd, Actual pendulum position: $actual_position_pendulum, Actual motor position: $actual_position_motor, Target motor position: $target_position_motor")
             end
 
-            if jsbuttons.btn1.val  # Xbox A-button
-                # Start the motor
-                write(arduino, "$START_MOTOR_COMMAND\n")
-            elseif jsbuttons.btn2.val  # Xbox B-button
-                # Stop the motor
-                write(arduino, "$STOP_MOTOR_COMMAND\n")
-            elseif jsbuttons.btn5.val  # Xbox Y-button
-                # Stop the motor
-                write(arduino, "$STOP_MOTOR_COMMAND\n")
-
-                # Stop the main loop
-                running = false
-            end
+            # if jsbuttons.btn1.val  # Xbox A-button
+            #     println("[Xbox] A-button pressed")
+            #     # Start the motor
+            #     write(arduino, "$START_MOTOR_COMMAND\n")
+            # elseif jsbuttons.btn2.val  # Xbox B-button
+            #     println("[Xbox] B-button pressed")
+            #     # Stop the motor
+            #     write(arduino, "$STOP_MOTOR_COMMAND\n")
+            # elseif jsbuttons.btn5.val  # Xbox Y-button
+            #     println("[Xbox] Y-button pressed")
+            #     # Stop the motor
+            #     write(arduino, "$STOP_MOTOR_COMMAND\n")
+            #     # Stop the main loop
+            #     running = false
+            # end
 
             # Sleep for a short period of time
-            sleep(Millisecond(10))  # 10 ms
+            # sleep(Millisecond(1))
         end
     end
 end
