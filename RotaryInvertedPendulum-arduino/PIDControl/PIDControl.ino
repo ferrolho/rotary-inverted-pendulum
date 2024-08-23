@@ -90,15 +90,15 @@ void setup()
     int magStrength = ams5600.getMagnetStrength();
     if (magStrength == 1)
     {
-        Serial.println("[AS5600] Magnet strength is too weak.");
+        Serial.println("[AS5600] Magnet strength is too weak. ---");
     }
     else if (magStrength == 2)
     {
-        Serial.println("[AS5600] Magnet strength is just right! :chef-kiss:");
+        Serial.println("[AS5600] Magnet strength is just right! ✔");
     }
     else if (magStrength == 3)
     {
-        Serial.println("[AS5600] Magnet strength is too strong.");
+        Serial.println("[AS5600] Magnet strength is too strong. +++");
     }
 
     ams5600_initial_position = ams5600.getRawAngle();
