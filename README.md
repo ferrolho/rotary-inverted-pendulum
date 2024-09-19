@@ -37,9 +37,9 @@ There are two models of the rotary inverted pendulum: one with batteries and one
 
 ### Circuit Diagram
 
-| System without batteries                                                     | System with batteries                                                     |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| ![diagrams/system-with-batteries.jpg](diagrams/system-without-batteries.jpg) | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) |
+| System without batteries                                       | System with batteries                                       |
+| -------------------------------------------------------------- | ----------------------------------------------------------- |
+| <img src="diagrams/system-without-batteries.jpg" height="600"> | <img src="diagrams/system-with-batteries.jpg" height="600"> |
 
 > [!CAUTION]
 > The circuit diagram above for the system with batteries is not correct and needs updating. The BMS needs to be capable of managing 3 cells and the batteries required are 3 not 2. In general, the system with batteries is just a prototype at this stage; I have not tried to put the electronics together yet, and the 3D printed parts are also not designed with the extra storage required for holding the batteries and BMS.
