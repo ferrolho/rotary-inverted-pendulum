@@ -1,5 +1,8 @@
 # Rotary Inverted Pendulum
 
+> [!WARNING]
+> Documentation and software are still a work in progress. Hardware (mechanical design and electronics) are mostly finished.
+
 The rotary inverted pendulum is a classic control problem that is used to demonstrate the principles of control theory. The system consists of a pendulum that is mounted on a rotary base, and the goal is to balance the pendulum in the upright position by controlling the rotary base. The system is inherently unstable, which makes it a challenging controls problem.
 
 The goal of this project is to build a simple and affordable rotary inverted pendulum that can be used to teach control theory to students and hobbyists.
@@ -7,8 +10,10 @@ The goal of this project is to build a simple and affordable rotary inverted pen
 **Table of Contents**
 - [Rotary Inverted Pendulum](#rotary-inverted-pendulum)
   - [Mechanics](#mechanics)
+    - [3D Printing](#3d-printing)
   - [Electronics](#electronics)
     - [Circuit Diagram](#circuit-diagram)
+    - [Time Estimates:](#time-estimates)
     - [Current Limiting](#current-limiting)
   - [Software](#software)
     - [Arduino](#arduino)
@@ -22,6 +27,10 @@ The goal of this project is to build a simple and affordable rotary inverted pen
 
 The rotary inverted pendulum uses off-the-shelf components that are easy to source and assemble. The mechanical design is done in [Onshape](https://www.onshape.com/en/) and the STL files are available in the [meshes](meshes) folder. If you are looking for the actual project in Onshape, you can find it [here](https://cad.onshape.com/documents/fa8afe5031ca70c78442e408/w/5519455d45464bacd4cf9b1d/e/79273ac76c3305af463951de).
 
+### 3D Printing
+
+I have been printint all the pieces in my [Bambu Lab A1 mini](https://bambulab.com/en-gb/a1-mini) — which at the time of me writing this costs £170, and it is great value for the money. I have had success printing in both PLA and PETG using [Bambu Studio](https://bambulab.com/en/download/studio) with the default print settings and with 'Tree' support for the enclosure and arm STL files. When printing the pendulum, add a pause on layer 21 — this is the time when you should place a 2 pence coin (or other similarly sized coin) in the slot, before the printer resumes to cover the slot for the weight. As for the lid STL, I have been printing it in two parts so I can manually change the filament for having a different colour for the 45-degree angle indicator lines. I will add more detailed instructions about the 3D printing here in the future, and maybe even make a video of the printing process for all the parts required.
+
 ## Electronics
 
 There are two models of the rotary inverted pendulum: one with batteries and one without. The model with batteries is more portable and can be used without any cables, while the model without batteries requires a power supply to be connected at all times. However, both devices require a USB cable if you want to control them from a computer.
@@ -32,11 +41,26 @@ There are two models of the rotary inverted pendulum: one with batteries and one
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | ![diagrams/system-with-batteries.jpg](diagrams/system-without-batteries.jpg) | ![diagrams/system-with-batteries.jpg](diagrams/system-with-batteries.jpg) |
 
+> [!CAUTION]
+> The circuit diagram above for the system with batteries is not correct and needs updating. The BMS needs to be capable of managing 3 cells and the batteries required are 3 not 2. In general, the system with batteries is just a prototype at this stage; I have not tried to put the electronics together yet, and the 3D printed parts are also not designed with the extra storage required for holding the batteries and BMS.
+
 The **battery management system (BMS)** is a circuit that manages the batteries in the device. It performs the following functions:
 - balance charging (ensures that all cells in the battery pack are charged to the same voltage)
 - short-circuit protection (prevents the batteries from being damaged in case of a short circuit)
 - overcharge protection (prevents the batteries from being overcharged)
 - overdischarge protection (prevents the batteries from being overdischarged)
+
+I have spent countless hours debugging prototype boards that I put together when building the first few versions of these pendulum. At first, I used a wire that was too thick (24 AWG) and then I switched to a thinner wire (30 AWG). The jump in size was a lot more than I expected — but then again, I had no prior experience or notion about the AWG scale. My first protoboard using only the thick wire (24 AWG) worked first try, but then I realised the components were not placed correctly for it to fit properly into the enclosure while accomodating space in the correct places for the device's switch and DC jack. As such, I prepared another protoboard, this time with the header pins positioned correctly; however, after turning the pendulum on,it could not balance properly and the boards (both the Arduino and stepper motor driver) started overheating. I burned through 2 Arduino Nano until I was convinced that there was actualy something wrong. I tested the connectivities again, and everything checked out, so I didn't know what was going on or how to debug it. Thus, I started anew from a new protoboard and tried again. Similarly, nothing worked even though the connectivity with the multimeter checked out. I realised that making boards from scratch until one of them worked was not a viable and sane path, so I picked the latest board — which was looking quite good! — and decided to first try and get one of the subsystems working before moving to the next; I started with the magnetic encoder. I wrote a small test script so I could plot the signal via the serial on the Arduino IDE plotter. As I suspected, the signal was terrible and nonsensical. At this point, I had no idea why that was. I tried debraiding the wires, but that didn't work. I picked up a new magnetic encoder and tried soldering new wires, but it didn't work. I braided the cables again, and then tested, and then debraided them again. In the end, I somehow tried soldering the wire points on the magnetic encoder (which are really tiny) from both front and back — and voila! That did the trick! Now I have a very solid signal, stable, not noisy — and I can also confirm that you can braid the wires, as that was not the culprit after all. Now that the sensing subsystem is working, let's move on to debugging the actuation subsystem.
+
+Tip - It is better to cut the wires slightly longer than you think they'll need to be rather than cutting them exactly the length they need to be (or shorter!) and then struggle with the soldering task.
+
+### Time Estimates:
+
+**1h–1.5h**
+- Solder male pins to the Arduino Nano
+- Solder header pins to the protoboard
+- Solder connection wires on the protoboard
+
 
 ### Current Limiting
 
