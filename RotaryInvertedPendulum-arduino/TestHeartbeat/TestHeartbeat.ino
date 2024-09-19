@@ -1,5 +1,7 @@
 void setup()
 {
+    Serial.begin(115200);
+    Serial.println("Test Heartbeat");
     pinMode(LED_BUILTIN, OUTPUT);
 }
 

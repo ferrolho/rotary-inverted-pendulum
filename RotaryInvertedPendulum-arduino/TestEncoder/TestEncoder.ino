@@ -3,11 +3,15 @@
 
 // Create an instance of the AS5600 class
 AMS_5600 ams5600;
-long ams5600_initial_position = 0;
 
 // Plotting variables
 int counterPlot = 0;
 int frequencyPlot = 20;
+
+// Calibration variables
+const int numSamples = 100;      // Number of samples to average
+const int calibrationDelay = 10; // Delay between samples (in milliseconds)
+long ams5600_initial_position = 0;
 
 void setup()
 {
@@ -39,8 +43,9 @@ void setup()
         Serial.println("[AS5600] Magnet strength is too strong. +++");
     }
 
-    ams5600_initial_position = ams5600.getRawAngle();
-    Serial.print("[AS5600] ams5600_initial_position: ");
+    // Calibrate the initial position by averaging multiple readings
+    ams5600_initial_position = calibrateRestPosition();
+    Serial.print("[AS5600] Calibrated ams5600_initial_position: ");
     Serial.println(ams5600_initial_position);
 }
 
@@ -81,4 +86,20 @@ float convertRawAngleToDegrees()
     // Map the 0–4095 segments of the AS5600 to 0–360 degrees
     // 360 degrees / 4096 segments = 0.087890625 degrees per segment
     return difference * 0.087890625;
+}
+
+/*
+ * Calibrate the rest position by averaging multiple readings
+ */
+long calibrateRestPosition()
+{
+    long sum = 0;
+
+    for (int i = 0; i < numSamples; i++)
+    {
+        sum += ams5600.getRawAngle();
+        delay(calibrationDelay);
+    }
+
+    return sum / numSamples;
 }
