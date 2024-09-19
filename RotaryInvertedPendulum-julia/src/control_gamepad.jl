@@ -1,4 +1,4 @@
-function gamepad_control()
+function gamepad_control(baud_rate::Int=2000000, control_frequency::Int=100)
     # Initialize motor variables
     actual_position_motor = 0
     target_position_motor = 0
@@ -12,7 +12,7 @@ function gamepad_control()
     # Joystick to motor velocity multiplier
     multiplier = 50.0
 
-    LibSerialPort.open("/dev/cu.usbserial-110", BAUD_RATE) do arduino
+    LibSerialPort.open("/dev/cu.usbserial-110", baud_rate) do arduino
         # Wait until the Arduino is ready
         wait_until_ready(arduino)
 
@@ -32,7 +32,7 @@ function gamepad_control()
             # Calculate the elapsed time since the last update
             elapsed_time = current_time - last_update_time
 
-            if elapsed_time >= Millisecond(1000 / CONTROL_FREQUENCY)
+            if elapsed_time >= Millisecond(1000 / control_frequency)
                 # Get the actual position from the Arduino
                 write(arduino, "$GET_POSITION_COMMAND\n")
                 actual_position_motor = parse(Int, chomp(readline(arduino)))
