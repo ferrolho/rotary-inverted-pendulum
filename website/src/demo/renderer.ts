@@ -8,12 +8,14 @@
 
 import {
   AmbientLight,
+  CanvasTexture,
   Color,
   CylinderGeometry,
   DirectionalLight,
   Group,
   Mesh,
   MeshBasicMaterial,
+  OrthographicCamera,
   MeshStandardMaterial,
   PerspectiveCamera,
   Plane,
@@ -21,6 +23,8 @@ import {
   Raycaster,
   Scene,
   SphereGeometry,
+  Sprite,
+  SpriteMaterial,
   Vector2,
   Vector3,
   WebGLRenderer,
@@ -466,6 +470,67 @@ export class PendulumRenderer {
     this.render();
   }
 
+  // Orientation gizmo: an X/Y/Z triad drawn in a corner viewport, turned with the
+  // main camera. Off by default; the embed opts in.
+  private gizmo: { scene: Scene; camera: OrthographicCamera; corner: 'bottom-left' | 'bottom-right'; size: number } | null = null;
+
+  /** Show a small axis triad (X red, Y green, Z blue — MuJoCo's convention) in a corner. */
+  showAxesGizmo(opts: { corner?: 'bottom-left' | 'bottom-right'; sizePx?: number } = {}): void {
+    const scene = new Scene();
+    const axes: [Vector3, number, string][] = [
+      [new Vector3(1, 0, 0), 0xe5484d, 'X'],
+      [new Vector3(0, 1, 0), 0x30a46c, 'Y'],
+      [new Vector3(0, 0, 1), 0x3e7bfa, 'Z'],
+    ];
+    for (const [dir, color, label] of axes) {
+      const shaft = new Mesh(new CylinderGeometry(0.035, 0.035, 0.75, 12), new MeshBasicMaterial({ color }));
+      shaft.quaternion.setFromUnitVectors(UP_Y, dir);
+      shaft.position.copy(dir).multiplyScalar(0.375);
+      const tip = new Mesh(new SphereGeometry(0.1, 16, 12), new MeshBasicMaterial({ color }));
+      tip.position.copy(dir).multiplyScalar(0.8);
+      scene.add(shaft, tip, this.makeAxisLabel(label, color, dir.clone().multiplyScalar(1.12)));
+    }
+    const camera = new OrthographicCamera(-1.35, 1.35, 1.35, -1.35, 0.1, 10);
+    camera.up.set(0, 0, 1);
+    this.gizmo = { scene, camera, corner: opts.corner ?? 'bottom-left', size: opts.sizePx ?? 72 };
+    this.render();
+  }
+
+  private makeAxisLabel(text: string, color: number, at: Vector3): Sprite {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d')!;
+    g.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+    g.font = '600 44px ui-sans-serif, system-ui, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(text, 32, 34);
+    const sprite = new Sprite(new SpriteMaterial({ map: new CanvasTexture(c), depthTest: false }));
+    sprite.position.copy(at);
+    sprite.scale.set(0.42, 0.42, 1);
+    return sprite;
+  }
+
+  private renderGizmo(): void {
+    if (!this.gizmo) return;
+    const { scene, camera, corner, size } = this.gizmo;
+    // Look at the triad from the same direction the main camera looks at the rig.
+    camera.position.copy(this.camera.position).sub(this.scratch.set(this.target.x, this.target.y, this.target.z)).setLength(3);
+    camera.lookAt(0, 0, 0);
+    const canvasSize = this.renderer.getSize(new Vector2());
+    const margin = 8;
+    const x = corner === 'bottom-left' ? margin : canvasSize.x - size - margin;
+    this.renderer.autoClear = false;
+    this.renderer.setScissorTest(true);
+    this.renderer.setScissor(x, margin, size, size);
+    this.renderer.setViewport(x, margin, size, size);
+    this.renderer.clearDepth();
+    this.renderer.render(scene, camera);
+    this.renderer.setScissorTest(false);
+    this.renderer.setViewport(0, 0, canvasSize.x, canvasSize.y);
+    this.renderer.autoClear = true;
+  }
+
   render(): void {
     if (this.disposed) return;
     const cp = Math.cos(this.pitch);
@@ -477,6 +542,7 @@ export class PendulumRenderer {
     );
     this.camera.lookAt(this.target.x, this.target.y, this.target.z);
     this.renderer.render(this.scene, this.camera);
+    this.renderGizmo();
   }
 
   dispose(): void {

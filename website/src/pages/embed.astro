@@ -1,0 +1,62 @@
+---
+/**
+ * /embed/ — the live demo's 3D stage alone, for other sites to show in an iframe.
+ * No Starlight chrome and a transparent background, so it sits on the host's own
+ * design. See src/demo/embed.ts for the postMessage protocol.
+ */
+const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Rotary Inverted Pendulum — live demo</title>
+    <link rel="canonical" href={new URL(base, Astro.site)} />
+  </head>
+  <body data-base-url={base}>
+    <canvas data-canvas aria-label="3D view of the rotary inverted pendulum. Drag the pendulum to push it."></canvas>
+    <p data-status></p>
+    <script>
+      import { mountEmbed } from '../demo/embed.ts';
+
+      const canvas = document.querySelector<HTMLCanvasElement>('[data-canvas]')!;
+      const status = document.querySelector<HTMLElement>('[data-status]')!;
+      mountEmbed(canvas, status, document.body.dataset.baseUrl ?? '/').catch((err) => {
+        status.textContent = 'Could not load the demo.';
+        window.parent?.postMessage({ type: 'rip:status', text: status.textContent }, '*');
+        console.error(err);
+      });
+    </script>
+    <style is:global>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: transparent;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+        touch-action: none;
+      }
+      canvas:active {
+        cursor: grabbing;
+      }
+      [data-status] {
+        position: absolute;
+        inset: auto 0 12px;
+        margin: 0;
+        text-align: center;
+        font: 11.5px ui-monospace, Menlo, monospace;
+        color: #888;
+        pointer-events: none;
+      }
+    </style>
+  </body>
+</html>
